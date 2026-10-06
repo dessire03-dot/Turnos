@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Control de Procedimientos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg: #F4F6F4;
+    --card: #FFFFFF;
+    --line: #DCE3DF;
+    --ink: #182422;
+    --ink-soft: #5B6B67;
+    --teal: #0E4A45;
+    --teal-dark: #0A3A36;
+    --gold: #B3860B;
+    --gold-soft: #FBF2D9;
+    --green: #2F8F5B;
+    --green-soft: #E7F5EC;
+    --red: #A8422C;
+    --red-soft: #FBEAE5;
+    --radius: 14px;
+  }
+  :root{ box-sizing:border-box; padding-top:env(safe-area-inset-top, 0px); padding-bottom:env(safe-area-inset-bottom, 0px); }
+  html{ scroll-padding-top:env(safe-area-inset-top, 0px); }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{ font-family:'Space Grotesk',sans-serif; }
+  .mono{ font-family:'IBM Plex Mono',monospace; }
+  button{ font-family:inherit; cursor:pointer; }
+  input,select{ font-family:inherit; }
+
+  #app{ max-width:820px; margin:0 auto; padding:20px 16px 80px; }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:22px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-mark{
+    width:34px; height:34px; border-radius:9px; background:var(--teal);
+    display:flex; align-items:center; justify-content:center;
+    color:#fff; font-family:'Space Grotesk'; font-weight:700; font-size:15px;
+  }
+  .brand-text{ font-family:'Space Grotesk'; font-weight:700; font-size:16px; letter-spacing:-0.01em;}
+  .back-link{
+    font-size:13px; color:var(--ink-soft); background:none; border:none;
+    display:flex; align-items:center; gap:4px; padding:6px 0;
+  }
+  .back-link:hover{ color:var(--teal); }
+
+  /* ---------- Mode select ---------- */
+  .hero{ text-align:center; margin: 40px 0 32px; }
+  .hero h1{ font-size:26px; font-weight:700; margin:0 0 8px; letter-spacing:-0.02em; }
+  .hero p{ color:var(--ink-soft); font-size:14.5px; margin:0; }
+
+  .mode-grid{ display:grid; gap:14px; }
+  .mode-card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:22px; text-align:left; display:flex; align-items:center; gap:16px;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .mode-card:hover{ transform:translateY(-2px); box-shadow:0 8px 24px rgba(14,74,69,0.08); border-color:var(--teal); }
+  .mode-icon{
+    width:46px; height:46px; border-radius:12px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:20px;
+  }
+  .mode-card.doctor .mode-icon{ background:var(--green-soft); }
+  .mode-card.admin .mode-icon{ background:var(--gold-soft); }
+  .mode-card h3{ margin:0 0 3px; font-size:16px; }
+  .mode-card p{ margin:0; font-size:13px; color:var(--ink-soft); }
+  .mode-card .arrow{ margin-left:auto; color:var(--ink-soft); font-size:18px; }
+
+  /* ---------- Cards / sections ---------- */
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:var(--radius);
+    padding:18px; margin-bottom:14px;
+  }
+  .field{ margin-bottom:14px; }
+  .field label{ display:block; font-size:12.5px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; text-transform:uppercase; letter-spacing:.03em; }
+  .field input[type=text], .field input[type=password], .field input[type=number], .field select{
+    width:100%; padding:11px 12px; border:1.5px solid var(--line); border-radius:9px;
+    font-size:15px; background:#fff; color:var(--ink);
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color:var(--teal); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .btn{
+    border:none; border-radius:10px; padding:13px 18px; font-weight:600; font-size:14.5px;
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    transition:opacity .15s ease, transform .1s ease;
+  }
+  .btn:active{ transform:scale(0.98); }
+  .btn-primary{ background:var(--teal); color:#fff; width:100%; }
+  .btn-primary:hover{ background:var(--teal-dark); }
+  .btn-primary:disabled{ opacity:.4; cursor:not-allowed; }
+  .btn-ghost{ background:transparent; color:var(--teal); border:1.5px solid var(--line); }
+  .btn-ghost:hover{ border-color:var(--teal); }
+  .btn-danger-ghost{ background:transparent; color:var(--red); border:1.5px solid var(--line); padding:8px 12px; font-size:13px;}
+  .btn-sm{ padding:8px 12px; font-size:13px; }
+
+  /* ---------- Procedure list (doctor) ---------- */
+  .search-box{ position:relative; margin-bottom:12px; }
+  .search-box input{ width:100%; padding:11px 12px 11px 36px; border:1.5px solid var(--line); border-radius:9px; font-size:14.5px; }
+  .search-box::before{ content:"⌕"; position:absolute; left:12px; top:50%; transform:translateY(-50%); color:var(--ink-soft); font-size:16px; }
+
+  .proc-row{
+    display:flex; align-items:center; gap:12px; padding:13px 4px; border-bottom:1px solid var(--line);
+  }
+  .proc-row:last-child{ border-bottom:none; }
+  .proc-info{ flex:1; min-width:0; }
+  .proc-name{ font-size:14.5px; font-weight:600; }
+  .proc-price{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+
+  .proc-block{ padding:13px 4px; border-bottom:1px solid var(--line); }
+  .proc-block:last-child{ border-bottom:none; }
+  .proc-block-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .add-patient-btn{
+    background:var(--green-soft); color:var(--green); border:none; border-radius:8px;
+    padding:7px 11px; font-size:12.5px; font-weight:700; flex-shrink:0;
+  }
+  .add-patient-btn:hover{ opacity:.8; }
+  .patient-list{ margin-top:10px; display:flex; flex-direction:column; gap:8px; }
+  .patient-line{ display:flex; align-items:center; gap:8px; }
+  .patient-line .patient-input{
+    flex:1; padding:9px 11px; border:1.5px solid var(--line); border-radius:8px; font-size:14px; background:#fff; color:var(--ink);
+  }
+  .patient-line .patient-input:focus{ outline:none; border-color:var(--teal); }
+  .patient-line .remove-patient{ background:none; border:none; color:var(--red); font-size:15px; flex-shrink:0; width:28px; height:28px; }
+  .stepper{ display:flex; align-items:center; gap:0; border:1.5px solid var(--line); border-radius:9px; overflow:hidden; flex-shrink:0; }
+  .stepper button{ width:32px; height:32px; border:none; background:#fff; font-size:16px; color:var(--teal); font-weight:700; }
+  .stepper button:hover{ background:var(--green-soft); }
+  .stepper .qty{ width:30px; text-align:center; font-weight:700; font-size:14px; font-family:'IBM Plex Mono'; }
+
+  .empty-state{ text-align:center; padding:40px 20px; color:var(--ink-soft); }
+  .empty-state .glyph{ font-size:30px; margin-bottom:10px; }
+  .empty-state p{ font-size:14px; margin:4px 0; }
+
+  /* ---------- Sticky total (doctor) ---------- */
+  .sticky-bar{
+    position:sticky; bottom:0; margin-top:16px; background:var(--teal); color:#fff;
+    border-radius:var(--radius); padding:16px 18px; padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));
+    display:flex; align-items:center; justify-content:space-between;
+    box-shadow:0 -8px 24px rgba(0,0,0,0.12);
+  }
+  .sticky-bar .label{ font-size:12px; opacity:.75; text-transform:uppercase; letter-spacing:.04em; }
+  .sticky-bar .amount{ font-family:'IBM Plex Mono'; font-size:20px; font-weight:600; }
+  .sticky-bar button{
+    background:#fff; color:var(--teal-dark); border:none; border-radius:9px; padding:11px 20px; font-weight:700; font-size:14px;
+  }
+  .sticky-bar button:disabled{ opacity:.5; }
+
+  /* ---------- Ticket confirmation (signature element) ---------- */
+  .ticket-wrap{ display:flex; justify-content:center; padding:20px 0 8px; }
+  .ticket{
+    width:100%; max-width:380px; background:#fff; border:1.5px dashed var(--line);
+    border-radius:10px; padding:22px 20px; position:relative;
+    animation:ticket-in .35s ease;
+  }
+  @keyframes ticket-in{ from{ opacity:0; transform:translateY(10px) scale(.98);} to{ opacity:1; transform:none; } }
+  .ticket::before, .ticket::after{
+    content:""; position:absolute; width:16px; height:16px; background:var(--bg);
+    border-radius:50%; top:50%; transform:translateY(-50%);
+  }
+  .ticket::before{ left:-8px; } .ticket::after{ right:-8px; }
+  .ticket-check{
+    width:44px; height:44px; border-radius:50%; background:var(--green-soft); color:var(--green);
+    display:flex; align-items:center; justify-content:center; font-size:22px; margin:0 auto 12px;
+  }
+  .ticket h3{ text-align:center; margin:0 0 2px; font-size:16px; }
+  .ticket .sub{ text-align:center; color:var(--ink-soft); font-size:12.5px; margin-bottom:16px; }
+  .ticket-line{ display:flex; justify-content:space-between; font-size:13px; padding:6px 0; border-bottom:1px dotted var(--line); }
+  .ticket-line span:first-child{ color:var(--ink-soft); }
+  .ticket-total{ display:flex; justify-content:space-between; padding-top:12px; margin-top:6px; font-weight:700; font-size:15px; }
+  .ticket-total .mono{ color:var(--teal); }
+
+  /* ---------- Admin ---------- */
+  .pin-wrap{ display:flex; justify-content:center; align-items:center; min-height:60vh; }
+  .pin-card{ text-align:center; max-width:280px; width:100%; }
+  .pin-card .lock{ width:52px; height:52px; border-radius:50%; background:var(--gold-soft); color:var(--gold); display:flex; align-items:center; justify-content:center; font-size:22px; margin:0 auto 14px; }
+  .pin-card input{ text-align:center; letter-spacing:6px; font-size:20px; font-family:'IBM Plex Mono'; }
+  .pin-error{ color:var(--red); font-size:12.5px; margin-top:8px; min-height:16px; }
+
+  .tabs{ display:flex; gap:6px; margin-bottom:16px; background:#EAEDEA; padding:4px; border-radius:11px; }
+  .tab{ flex:1; border:none; background:none; padding:9px 6px; border-radius:8px; font-size:13px; font-weight:600; color:var(--ink-soft); }
+  .tab.active{ background:#fff; color:var(--teal); box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+
+  .summary-header{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:14px; flex-wrap:wrap; }
+  .summary-header input[type=date]{ padding:9px 10px; border:1.5px solid var(--line); border-radius:9px; font-size:13.5px; }
+
+  .doctor-block{ margin-bottom:14px; }
+  .doctor-block-head{ display:flex; justify-content:space-between; align-items:baseline; padding:0 2px 8px; }
+  .doctor-block-head h4{ margin:0; font-size:15px; font-family:'Space Grotesk'; }
+  .doctor-block-head .count{ font-size:12px; color:var(--ink-soft); }
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  th{ text-align:left; color:var(--ink-soft); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:.03em; padding:6px 4px; border-bottom:1.5px solid var(--line); }
+  td{ padding:9px 4px; border-bottom:1px solid var(--line); }
+  td.num, th.num{ text-align:right; font-family:'IBM Plex Mono'; }
+  .subtotal-row td{ font-weight:700; border-bottom:none; padding-top:8px; }
+  .subtotal-row .lbl{ color:var(--ink-soft); font-weight:600; font-size:12px; }
+
+  .grand-total{
+    background:var(--teal); color:#fff; border-radius:var(--radius); padding:18px;
+    display:flex; justify-content:space-between; align-items:center; margin-top:6px;
+  }
+  .grand-total .label{ font-size:12.5px; opacity:.8; text-transform:uppercase; letter-spacing:.03em; }
+  .grand-total .amount{ font-family:'IBM Plex Mono'; font-size:22px; font-weight:600; }
+  .commission-pill{
+    display:inline-flex; align-items:center; gap:5px; background:var(--gold-soft); color:var(--gold);
+    padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700; margin-top:10px;
+  }
+
+  .action-row{ display:flex; gap:10px; margin-top:14px; }
+  .action-row .btn{ flex:1; }
+
+  .proc-edit-row{ display:grid; grid-template-columns:1fr 76px 76px 30px; gap:8px; align-items:center; padding:8px 2px; border-bottom:1px solid var(--line); }
+  .proc-edit-row input{ padding:8px 9px; border:1.5px solid var(--line); border-radius:7px; font-size:13px; width:100%; }
+  .proc-edit-row .del{ background:none; border:none; color:var(--red); font-size:17px; }
+  .col-labels{ display:grid; grid-template-columns:1fr 76px 76px 30px; gap:8px; padding:0 2px 6px; }
+  .col-labels span{ font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; font-weight:700; letter-spacing:.03em; }
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%) translateY(20px); opacity:0;
+    background:var(--ink); color:#fff; padding:12px 20px; border-radius:10px; font-size:13.5px; font-weight:600;
+    transition:all .25s ease; pointer-events:none; z-index:50; white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .hint{ font-size:12px; color:var(--ink-soft); line-height:1.5; margin-top:4px; }
+  .divider{ height:1px; background:var(--line); margin:16px 0; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const STORAGE_KEYS = {
+  procedures: 'clinic:procedures',
+  entries: 'clinic:entries',
+  pin: 'clinic:admin-pin',
+  guardiaEntries: 'clinic:guardia-entries'
+};
+
+function nuevaFilaGuardia(){
+  return { paciente:'', consulta:'', seguimiento:'', urgencia:'', ingreso:'', procedimiento:'' };
+}
+
+const DEFAULT_PROCEDURES_DATA = [
+  ['Ameu con Anestesia',300],
+  ['Ameu con Sedante',200],
+  ['Apendicetomia con Examenes',500],
+  ['Aplicacion de yeso/ 1 unidad',50],
+  ['Aplicacion de yeso/ 2 unidades',100],
+  ['Cambio Bolsa Colostomia en emergencia',100],
+  ['Cambio de sonda con materiales',100],
+  ['Cambio de sonda sin materiales',50],
+  ['Cesarea con Examenes',500],
+  ['Cirugia General',500],
+  ['Cirugia menor',300],
+  ['Citologia Convencional Medico General',30],
+  ['Colocacion de Sonda en Emergencia',50],
+  ['Colocacion de Sonda Nasogastrica en Emergencia',100],
+  ['Colocacion Implanon',100],
+  ['Curacion de Herida en Emergencia',50],
+  ['Curacion de Herida Seca en Emergencia',50],
+  ['Curacion de Heridas',50],
+  ['Curacion de heridas con Derminova',50],
+  ['Debridamiento',50],
+  ['Drenaje de Abceso en Emergencia',100],
+  ['Electrocardiograma',50],
+  ['Examen Fisico Medico General',100],
+  ['Extraccion de cuerpo extrano',50],
+  ['Extraccion de una',50],
+  ['Ferula para Canalizacion',50],
+  ['Hospitalizacion',700],
+  ['Lavado de oido (un oido)',50],
+  ['Lavado de Ojo',50],
+  ['Lavado Gastrico',100],
+  ['Lavado Nasal',50],
+  ['Legrado /Sin biopsia',500],
+  ['Legrado con Anestesia Local',300],
+  ['Legrado con biopsia',500],
+  ['Parto',500],
+  ['RETIRO DE DIU',100],
+  ['Retiro de Grapas en Emergencia',50],
+  ['Retiro de Implanon/implante',100],
+  ['Retiro de puntos',50],
+  ['Retiro de sonda',50],
+  ['Retiro de Yeso',50],
+  ['Sutura 1 hilo/ materila/insumos',50],
+  ['Sutura de Herida en Emergencia',100],
+  ['Sutura/2 hilos',100],
+  ['Sutura/3 hilos',150],
+  ['Monitoreo Fetal',50],
+  ['Paracentesis',100],
+];
+function buildDefaultProcedures(){
+  return DEFAULT_PROCEDURES_DATA.map(([name,commission]) => ({ id: uid(), name, price:0, commission }));
+}
+
+let state = {
+  view: 'mode-select', // mode-select | doctor | admin-pin | admin | doctor-guardia | guardia-ticket
+  adminTab: 'resumen',
+  procedures: [],
+  doctorForm: { name:'', shift:'Mañana', procPatients:{}, search:'' },
+  lastTicket: null,
+  entries: [],
+  summaryDate: todayStr(),
+  pin: null,
+  showImport: false,
+  guardiaForm: { medico:'', fecha:'', filas:[nuevaFilaGuardia(),nuevaFilaGuardia(),nuevaFilaGuardia()] },
+  guardiaEntries: [],
+  lastGuardiaTicket: null
+};
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function fmtDate(str){
+  const [y,m,d] = str.split('-');
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  return `${parseInt(d)} ${meses[parseInt(m)-1]} ${y}`;
+}
+function money(n){
+  return 'L ' + (Math.round(n*100)/100).toLocaleString('es-HN', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+function showToast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2200);
+}
+
+// ---------- storage helpers (JSONBin) ----------
+const JSONBIN_ID  = '6ac45ed6ac6210605a179254';
+const JSONBIN_KEY = '$2a$10$5LfQM06CKlLlTE9I4sZ3RObZG.hD2unCGO/cLdbvZrLDQzVebh2.O';
+const JSONBIN_URL = 'https://api.jsonbin.io/v3/b/' + JSONBIN_ID;
+const JSONBIN_MAX = 95000; // el plan gratis permite 100 KB por bin
+let _binCache = null, _binCacheAt = 0;
+
+async function binRead(force){
+  if(!force && _binCache && Date.now() - _binCacheAt < 4000) return _binCache;
+  const r = await fetch(JSONBIN_URL + '/latest', {
+    headers: { 'X-Access-Key': JSONBIN_KEY, 'X-Bin-Meta': 'false' },
+    cache: 'no-store'
+  });
+  if(!r.ok) throw new Error('JSONBin lectura ' + r.status);
+  const rec = await r.json();
+  _binCache = rec; _binCacheAt = Date.now();
+  return rec;
+}
+async function binWrite(rec){
+  const body = JSON.stringify(rec);
+  if(body.length > JSONBIN_MAX){
+    showToast('Se llenó el almacenamiento gratuito (100 KB). Avisa a la administradora.');
+    throw new Error('JSONBin: bin demasiado grande');
+  }
+  const r = await fetch(JSONBIN_URL, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Access-Key': JSONBIN_KEY },
+    body
+  });
+  if(!r.ok) throw new Error('JSONBin escritura ' + r.status);
+  _binCache = rec; _binCacheAt = Date.now();
+  return true;
+}
+async function loadKey(k){
+  const rec = await binRead(false);
+  return rec[k];
+}
+async function saveKey(k, v){
+  try{
+    const rec = await binRead(true);
+    rec[k] = v;
+    return await binWrite(rec);
+  }catch(e){ console.error(e); return false; }
+}
+async function appendToKey(k, item, seed){
+  try{
+    const rec = await binRead(true);
+    const list = Array.isArray(rec[k]) && rec[k].length > 0 ? rec[k] : (seed ? seed.slice() : []);
+    list.push(item);
+    rec[k] = list;
+    return await binWrite(rec);
+  }catch(e){ console.error(e); return false; }
+}
+async function loadProcedures(){
+  try{
+    const list = await loadKey('procedures');
+    if(Array.isArray(list) && list.length > 0) return list;
+    const defaults = buildDefaultProcedures();
+    await saveProcedures(defaults);
+    return defaults;
+  }catch(e){ console.error(e); return buildDefaultProcedures(); }
+}
+async function saveProcedures(list){
+  return saveKey('procedures', list);
+}
+const HISTORIC_ENTRIES = [
+  {
+    "id": "hist-1",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-01",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-Colocación de sonda",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Electrocardiograma",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-Lavado Ocular",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-2",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-01",
+    "shift": "Mañana, Tarde",
+    "items": [
+      {
+        "name": "Honorario medico-Retiro de sonda",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Electrocardiograma",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-Drenaje de abceso",
+        "price": 0,
+        "commission": 100,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Ultrasonido",
+        "price": 0,
+        "commission": 50,
+        "qty": 4,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-3",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-08",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario Electrocardiograma",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-4",
+    "doctor": "Emilio Osegueda",
+    "date": "2026-09-02",
+    "shift": "Tarde, Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-sutura No.2 Hilo",
+        "price": 0,
+        "commission": 100,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-curacion pequeña",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      },
+      {
+        "name": "Honorario Electrocardiograma",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Retiro de Puntos",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-Lavado de Oido",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-5",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-09",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-sutura No.3 Hilo",
+        "price": 0,
+        "commission": 150,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Ultrasonido",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-6",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-10",
+    "shift": "Tarde",
+    "items": [
+      {
+        "name": "Honorario medico-Lavado de Oido",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-7",
+    "doctor": "Emilio Osegueda",
+    "date": "2026-09-15",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-sutura No.1 Hilo",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-curacion pequeña",
+        "price": 0,
+        "commission": 50,
+        "qty": 3,
+        "patients": []
+      },
+      {
+        "name": "Honorario Retiro de Puntos",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-8",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-16",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-Lavado de Oido",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorarios medico-Extraccion de Uña",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Electrocardiograma",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      },
+      {
+        "name": "Honorario Ultrasonido",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-9",
+    "doctor": "Emilio Osegueda",
+    "date": "2026-09-21",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-sutura No.2 Hilo",
+        "price": 0,
+        "commission": 100,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-curacion pequeña",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      },
+      {
+        "name": "Honorario Cirugia Captación/Agendado/Notificado",
+        "price": 0,
+        "commission": 500,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Retiro de Puntos",
+        "price": 0,
+        "commission": 50,
+        "qty": 2,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-10",
+    "doctor": "Emilio Osegueda",
+    "date": "2026-09-17",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-Lavado de Oido",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Cirugia Captación/Agendado/Notificado",
+        "price": 0,
+        "commission": 500,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-11",
+    "doctor": "Daniel Osegueda",
+    "date": "2026-09-23",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-Drenaje de abceso",
+        "price": 0,
+        "commission": 100,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario Retiro de Puntos",
+        "price": 0,
+        "commission": 50,
+        "qty": 3,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  },
+  {
+    "id": "hist-12",
+    "doctor": "Emilio Osegueda",
+    "date": "2026-09-26",
+    "shift": "Mañana",
+    "items": [
+      {
+        "name": "Honorario medico-Extraccion de Cuerpo Extraño",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      },
+      {
+        "name": "Honorario medico-lavado nasal",
+        "price": 0,
+        "commission": 50,
+        "qty": 1,
+        "patients": []
+      }
+    ],
+    "timestamp": 0
+  }
+];
+
+async function loadEntries(){
+  try{
+    const list = await loadKey('entries');
+    if(Array.isArray(list) && list.length > 0) return list;
+    await saveEntries(HISTORIC_ENTRIES);
+    return HISTORIC_ENTRIES.slice();
+  }catch(e){ console.error(e); showToast('No se pudieron cargar los registros'); return []; }
+}
+async function saveEntries(list){
+  return saveKey('entries', list);
+}
+async function loadGuardiaEntries(){
+  try{
+    const list = await loadKey('guardiaEntries');
+    return Array.isArray(list) ? list : [];
+  }catch(e){ console.error(e); return []; }
+}
+async function saveGuardiaEntries(list){
+  return saveKey('guardiaEntries', list);
+}
+async function loadPin(){
+  try{
+    const p = await loadKey('pin');
+    return p || '1234';
+  }catch(e){ return '1234'; }
+}
+async function savePin(pin){
+  return saveKey('pin', pin);
+}
+
+// ---------- render root ----------
+async function render(){
+  const app = document.getElementById('app');
+  if(state.view === 'mode-select') app.innerHTML = renderModeSelect();
+  else if(state.view === 'doctor') app.innerHTML = renderDoctor();
+  else if(state.view === 'ticket') app.innerHTML = renderTicket();
+  else if(state.view === 'doctor-guardia') app.innerHTML = renderGuardiaDoctor();
+  else if(state.view === 'guardia-ticket') app.innerHTML = renderGuardiaTicket();
+  else if(state.view === 'admin-pin') app.innerHTML = renderAdminPin();
+  else if(state.view === 'admin') app.innerHTML = renderAdmin();
+  attachHandlers();
+}
+
+function topbar(title, onBack){
+  return `
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">RX</div>
+      <div class="brand-text">${title}</div>
+    </div>
+    ${onBack ? `<button class="back-link" id="btn-back">← Salir</button>` : ''}
+  </div>`;
+}
+
+// ---------- MODE SELECT ----------
+function renderModeSelect(){
+  return `
+    ${topbar('Clínica Santa Fe')}
+    <div class="hero">
+      <h1>Registro de turno</h1>
+      <p>Marca lo que hiciste en tu turno. Nadie más ve tu registro.</p>
+    </div>
+    <div class="mode-grid">
+      <button class="mode-card doctor" id="go-doctor">
+        <div class="mode-icon">🩺</div>
+        <div><h3>Procedimientos</h3><p>Registrar procedimientos de mi turno</p></div>
+        <div class="arrow">→</div>
+      </button>
+      <button class="mode-card doctor" id="go-doctor-guardia">
+        <div class="mode-icon">🗓️</div>
+        <div><h3>Control de guardia</h3><p>Registrar el servicio médico de guardia</p></div>
+        <div class="arrow">→</div>
+      </button>
+      <button class="mode-card admin" id="go-admin">
+        <div class="mode-icon">📋</div>
+        <div><h3>Soy administrador</h3><p>Ver totales, comisiones y reportes</p></div>
+        <div class="arrow">→</div>
+      </button>
+    </div>
+  `;
+}
+
+// ---------- GUARDIA DOCTOR VIEW ----------
+function renderGuardiaDoctor(){
+  const { medico, fecha, filas } = state.guardiaForm;
+  const filasHtml = filas.map((f, idx) => `
+    <tr data-idx="${idx}">
+      <td class="num" style="color:var(--ink-soft);">${idx+1}</td>
+      <td><input type="text" class="gf-input" data-field="paciente" data-idx="${idx}" value="${f.paciente}" placeholder="Paciente"></td>
+      <td><input type="text" class="gf-input" data-field="consulta" data-idx="${idx}" value="${f.consulta}" style="width:60px"></td>
+      <td><input type="text" class="gf-input" data-field="seguimiento" data-idx="${idx}" value="${f.seguimiento}" style="width:70px"></td>
+      <td><input type="text" class="gf-input" data-field="urgencia" data-idx="${idx}" value="${f.urgencia}" style="width:60px"></td>
+      <td><input type="text" class="gf-input" data-field="ingreso" data-idx="${idx}" value="${f.ingreso}" style="width:60px"></td>
+      <td><input type="text" class="gf-input" data-field="procedimiento" data-idx="${idx}" value="${f.procedimiento}" placeholder="Procedimiento"></td>
+      <td><button class="remove-patient" data-delrow="${idx}">✕</button></td>
+    </tr>
+  `).join('');
+
+  const filasConDatos = filas.filter(f => f.paciente.trim()).length;
+
+  return `
+    ${topbar('Control de Guardia', true)}
+    <div class="card">
+      <div class="row2">
+        <div class="field">
+          <label>Médico</label>
+          <input type="text" id="guardia-medico" placeholder="Dr./Dra. ..." value="${medico}">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="text" id="guardia-fecha" placeholder="dd/mm/aaaa" value="${fecha}">
+        </div>
+      </div>
+    </div>
+    <div class="card" style="overflow-x:auto;">
+      <table style="min-width:640px;">
+        <thead>
+          <tr>
+            <th class="num" style="text-align:left;">No.</th>
+            <th>Paciente</th><th>Consulta</th><th>Seguimiento</th><th>Urgencia</th><th>Ingreso</th><th>Procedimiento</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="guardia-tbody">${filasHtml}</tbody>
+      </table>
+      <button class="btn btn-ghost btn-sm" id="guardia-add-row" style="margin-top:12px;width:100%;">+ Agregar fila</button>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-ghost" id="guardia-pdf">Descargar PDF</button>
+      <button class="btn btn-ghost" id="guardia-excel">Descargar Excel</button>
+    </div>
+    <button class="btn btn-primary" id="guardia-submit" style="margin-top:10px;" ${filasConDatos===0 || !medico.trim() ? 'disabled':''}>Enviar registro</button>
+  `;
+}
+
+// ---------- GUARDIA TICKET ----------
+function renderGuardiaTicket(){
+  const t = state.lastGuardiaTicket;
+  const filas = t.filas.filter(f => f.paciente.trim());
+  return `
+    ${topbar('Control de Guardia', true)}
+    <div class="ticket-wrap">
+      <div class="ticket">
+        <div class="ticket-check">✓</div>
+        <h3>Registro enviado</h3>
+        <div class="sub">${t.medico} · ${t.fecha}</div>
+        ${filas.map(f => `
+          <div class="ticket-line" style="flex-direction:column; align-items:stretch; gap:2px;">
+            <span style="font-weight:600;">${f.paciente}</span>
+            <span style="font-size:12px; color:var(--ink-soft); padding-left:6px;">${f.procedimiento || 'Sin procedimiento anotado'}</span>
+          </div>
+        `).join('')}
+        <div class="ticket-total"><span>Pacientes registrados</span><span class="mono">${filas.length}</span></div>
+      </div>
+    </div>
+    <div style="max-width:380px;margin:16px auto 0;">
+      <button class="btn btn-primary" id="new-guardia-record">Registrar otra guardia</button>
+    </div>
+  `;
+}
+
+// ---------- DOCTOR VIEW ----------
+function renderDoctor(){
+  const { name, shift, procPatients, search } = state.doctorForm;
+  const filtered = state.procedures.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
+  const itemCount = Object.values(procPatients).reduce((a,arr)=>a+arr.length,0);
+
+  let listHtml;
+  if(state.procedures.length === 0){
+    listHtml = `<div class="empty-state"><div class="glyph">🗂️</div><p><strong>Aún no hay procedimientos configurados.</strong></p><p>Pídele al administrador que los agregue en su panel.</p></div>`;
+  } else if(filtered.length === 0){
+    listHtml = `<div class="empty-state"><div class="glyph">⌕</div><p>Sin resultados para "${search}"</p></div>`;
+  } else {
+    listHtml = filtered.map(p => {
+      const patients = procPatients[p.id] || [];
+      return `
+      <div class="proc-block">
+        <div class="proc-block-head">
+          <div class="proc-name">${p.name}</div>
+          <button class="add-patient-btn" data-id="${p.id}">+ Paciente</button>
+        </div>
+        ${patients.length > 0 ? `
+        <div class="patient-list">
+          ${patients.map((val, idx) => `
+            <div class="patient-line">
+              <input type="text" class="patient-input" data-id="${p.id}" data-idx="${idx}" placeholder="Nombre del paciente" value="${val}">
+              <button class="remove-patient" data-id="${p.id}" data-idx="${idx}">✕</button>
+            </div>
+          `).join('')}
+        </div>` : ''}
+      </div>
+      `;
+    }).join('');
+  }
+
+  return `
+    ${topbar('Registro de Turno', true)}
+    <div class="card">
+      <div class="row2">
+        <div class="field">
+          <label>Médico</label>
+          <input type="text" id="doctor-name" placeholder="Tu nombre" value="${name}">
+        </div>
+        <div class="field">
+          <label>Turno</label>
+          <select id="doctor-shift">
+            ${['Mañana','Tarde','Noche'].map(s=>`<option value="${s}" ${s===shift?'selected':''}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    </div>
+
+    ${state.procedures.length > 0 ? `
+    <div class="search-box">
+      <input type="text" id="proc-search" placeholder="Buscar procedimiento..." value="${search}">
+    </div>` : ''}
+
+    <div class="card" style="padding-top:6px; padding-bottom:6px;">
+      ${listHtml}
+    </div>
+
+    <div class="sticky-bar">
+      <div>
+        <div class="label">Procedimientos</div>
+        <div class="amount mono">${itemCount}</div>
+      </div>
+      <button id="submit-shift" ${itemCount===0 || !name.trim() ? 'disabled' : ''}>Enviar registro</button>
+    </div>
+  `;
+}
+
+// ---------- TICKET CONFIRMATION ----------
+function renderTicket(){
+  const t = state.lastTicket;
+  return `
+    ${topbar('Registro de Turno', true)}
+    <div class="ticket-wrap">
+      <div class="ticket">
+        <div class="ticket-check">✓</div>
+        <h3>Registro enviado</h3>
+        <div class="sub">${t.doctor} · ${t.shift} · ${fmtDate(t.date)}</div>
+        ${t.items.map(i => `
+          <div class="ticket-line" style="flex-direction:column; align-items:stretch; gap:4px;">
+            <span style="font-weight:600;">${i.name}</span>
+            ${i.patients.map(pt => `<span style="font-size:12.5px; color:var(--ink-soft); padding-left:6px;">• ${pt}</span>`).join('')}
+          </div>
+        `).join('')}
+        <div class="ticket-total"><span>Total de procedimientos</span><span class="mono">${t.items.reduce((s,i)=>s+i.qty,0)}</span></div>
+      </div>
+    </div>
+    <div style="max-width:380px;margin:16px auto 0;">
+      <button class="btn btn-primary" id="new-record">Registrar otro procedimiento</button>
+    </div>
+  `;
+}
+
+// ---------- ADMIN PIN ----------
+function renderAdminPin(){
+  return `
+    ${topbar('Panel Admin', true)}
+    <div class="pin-wrap">
+      <div class="pin-card">
+        <div class="lock">🔒</div>
+        <h3 style="margin:0 0 4px;">Acceso administrador</h3>
+        <p class="hint" style="margin-bottom:16px;">Ingresa tu PIN de 4 dígitos</p>
+        <input type="password" id="pin-input" maxlength="8" inputmode="numeric" placeholder="••••">
+        <div class="pin-error" id="pin-error"></div>
+        <button class="btn btn-primary" id="pin-submit" style="margin-top:10px;">Entrar</button>
+      </div>
+    </div>
+  `;
+}
+
+// ---------- ADMIN ----------
+function renderAdmin(){
+  return `
+    ${topbar('Panel Admin', true)}
+    <div class="tabs">
+      <button class="tab ${state.adminTab==='resumen'?'active':''}" data-tab="resumen">Resumen</button>
+      <button class="tab ${state.adminTab==='guardia'?'active':''}" data-tab="guardia">Guardia</button>
+      <button class="tab ${state.adminTab==='procedimientos'?'active':''}" data-tab="procedimientos">Procedimientos</button>
+      <button class="tab ${state.adminTab==='ajustes'?'active':''}" data-tab="ajustes">Ajustes</button>
+    </div>
+    ${state.adminTab==='resumen' ? renderResumen() : ''}
+    ${state.adminTab==='guardia' ? renderGuardiaAdmin() : ''}
+    ${state.adminTab==='procedimientos' ? renderProcedimientos() : ''}
+    ${state.adminTab==='ajustes' ? renderAjustes() : ''}
+  `;
+}
+
+function renderGuardiaAdmin(){
+  const entries = [...state.guardiaEntries].sort((a,b)=> b.timestamp - a.timestamp);
+  if(entries.length === 0){
+    return `<div class="card"><div class="empty-state"><div class="glyph">🗓️</div><p>Todavía no hay registros de guardia.</p></div></div>`;
+  }
+  const cardsHtml = entries.map((r,i) => {
+    const filas = r.filas.filter(f=>f.paciente.trim());
+    const filasHtml = filas.map((f,idx)=>`
+      <tr><td>${idx+1}</td><td>${f.paciente}</td><td>${f.consulta||''}</td><td>${f.seguimiento||''}</td><td>${f.urgencia||''}</td><td>${f.ingreso||''}</td><td>${f.procedimiento||''}</td></tr>
+    `).join('');
+    return `
+      <div class="doctor-block">
+        <div class="doctor-block-head">
+          <h4>${r.medico}</h4>
+          <span class="count">${r.fecha} · ${filas.length} pacientes</span>
+        </div>
+        <div class="action-row" style="margin-top:0;margin-bottom:8px;">
+          <button class="btn btn-ghost btn-sm" data-guardia-pdf="${i}">PDF</button>
+          <button class="btn btn-ghost btn-sm" data-guardia-excel="${i}">Excel</button>
+        </div>
+        <table>
+          <thead><tr><th>No.</th><th>Paciente</th><th>Consulta</th><th>Seguim.</th><th>Urg.</th><th>Ingreso</th><th>Procedimiento</th></tr></thead>
+          <tbody>${filasHtml}</tbody>
+        </table>
+      </div>
+    `;
+  }).join('<div class="divider"></div>');
+
+  return `
+    <div class="card">${cardsHtml}</div>
+    <button class="btn btn-primary" id="guardia-excel-todo">Descargar todo en Excel</button>
+  `;
+}
+
+function renderResumen(){
+  const dayEntries = state.entries.filter(e => e.date === state.summaryDate);
+  const byDoctor = {};
+  dayEntries.forEach(e => {
+    if(!byDoctor[e.doctor]) byDoctor[e.doctor] = [];
+    byDoctor[e.doctor].push(e);
+  });
+
+  let grandTotal = 0, grandCommission = 0;
+
+  let blocksHtml = '';
+  if(Object.keys(byDoctor).length === 0){
+    blocksHtml = `<div class="empty-state"><div class="glyph">📭</div><p>No hay registros para el ${fmtDate(state.summaryDate)}.</p></div>`;
+  } else {
+    blocksHtml = Object.entries(byDoctor).map(([doctor, entries]) => {
+      const itemsMap = {};
+      let docTotal = 0, docCommission = 0;
+      entries.forEach(e => {
+        e.items.forEach(i => {
+          if(!itemsMap[i.name]) itemsMap[i.name] = { qty:0, price:i.price, commission:i.commission, patients:[] };
+          itemsMap[i.name].qty += i.qty;
+          itemsMap[i.name].patients.push(...i.patients);
+          docTotal += i.price * i.qty;
+          docCommission += i.commission * i.qty;
+        });
+      });
+      grandTotal += docTotal; grandCommission += docCommission;
+      const shifts = [...new Set(entries.map(e=>e.shift))].join(', ');
+      const patientsHtml = Object.entries(itemsMap).map(([name,i]) => `
+        <div style="padding:5px 0; font-size:12.5px;">
+          <span style="font-weight:600;">${name}</span>
+          <span style="color:var(--ink-soft);"> — ${i.patients.join(', ')}</span>
+        </div>
+      `).join('');
+      return `
+        <div class="doctor-block">
+          <div class="doctor-block-head">
+            <h4>${doctor}</h4>
+            <span class="count">${shifts}</span>
+          </div>
+          <div style="padding:0 2px 8px; border-bottom:1px dashed var(--line); margin-bottom:8px;">${patientsHtml}</div>
+          <table>
+            <thead><tr><th>Procedimiento</th><th class="num">Cant.</th><th class="num">Subtotal</th></tr></thead>
+            <tbody>
+              ${Object.entries(itemsMap).map(([name,i]) => `
+                <tr><td>${name}</td><td class="num mono">${i.qty}</td><td class="num mono">${money(i.qty*i.price)}</td></tr>
+              `).join('')}
+              <tr class="subtotal-row">
+                <td class="lbl">Comisión del médico</td><td></td>
+                <td class="num mono" style="color:var(--gold)">${money(docCommission)}</td>
+              </tr>
+              <tr class="subtotal-row">
+                <td class="lbl">Total generado</td><td></td>
+                <td class="num mono">${money(docTotal)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+    }).join('<div class="divider"></div>');
+  }
+
+  return `
+    <div class="summary-header">
+      <input type="date" id="summary-date" value="${state.summaryDate}">
+      <span class="hint">${dayEntries.length} registro${dayEntries.length!==1?'s':''} este día</span>
+    </div>
+    <div class="card">${blocksHtml}</div>
+    ${Object.keys(byDoctor).length > 0 ? `
+    <div class="grand-total">
+      <div>
+        <div class="label">Total del día — ${fmtDate(state.summaryDate)}</div>
+        <div class="amount mono">${money(grandTotal)}</div>
+        <div class="commission-pill">💰 Comisiones: ${money(grandCommission)}</div>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn btn-ghost" id="copy-summary">Copiar resumen</button>
+      <button class="btn btn-primary" id="email-summary">Enviar por correo</button>
+    </div>
+    ` : ''}
+  `;
+}
+
+function renderProcedimientos(){
+  return `
+    <div class="card">
+      <p class="hint" style="margin-bottom:14px;">Precio = lo que se cobra al paciente. Comisión = lo que le pagas al médico por ese procedimiento.</p>
+      <div class="col-labels">
+        <span>Nombre</span><span>Precio</span><span>Comisión</span><span></span>
+      </div>
+      <div id="proc-edit-list">
+        ${state.procedures.map(p => `
+          <div class="proc-edit-row" data-id="${p.id}">
+            <input type="text" class="pe-name" value="${p.name}">
+            <input type="number" class="pe-price" value="${p.price}" step="0.01">
+            <input type="number" class="pe-commission" value="${p.commission}" step="0.01">
+            <button class="del" data-del="${p.id}">✕</button>
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-ghost btn-sm" id="add-proc" style="margin-top:12px;width:100%;">+ Agregar procedimiento</button>
+      <button class="btn btn-ghost btn-sm" id="toggle-import" style="margin-top:8px;width:100%;">📋 Importar varios (sin precio)</button>
+      ${state.showImport ? `
+      <div style="margin-top:12px; padding-top:12px; border-top:1px dashed var(--line);">
+        <p class="hint" style="margin-bottom:8px;">Escribe o pega un nombre de procedimiento por línea. Se agregarán con precio y comisión en 0.</p>
+        <textarea id="import-textarea" rows="12" placeholder="Honorario medico-sutura No.1 Hilo&#10;Honorario medico-Lavado de Oido&#10;..." style="width:100%; padding:14px; border:1.5px solid var(--line); border-radius:8px; font-size:15px; line-height:1.6; font-family:inherit; resize:vertical; min-height:220px;"></textarea>
+        <button class="btn btn-primary btn-sm" id="confirm-import" style="margin-top:8px;width:100%;">Agregar a la lista</button>
+      </div>` : ''}
+    </div>
+    <button class="btn btn-primary" id="save-procs">Guardar cambios</button>
+  `;
+}
+
+function renderAjustes(){
+  return `
+    <div class="card">
+      <div class="field">
+        <label>Cambiar PIN de administrador</label>
+        <input type="password" id="new-pin" maxlength="8" inputmode="numeric" placeholder="Nuevo PIN">
+      </div>
+      <button class="btn btn-primary" id="save-pin">Guardar PIN</button>
+      <p class="hint" style="margin-top:14px;">Este PIN se guarda junto con los demás datos de la clínica y protege el acceso al panel, pero no es cifrado de nivel bancario — cualquiera con el enlace de esta app y el PIN puede entrar. No lo compartas fuera del personal autorizado.</p>
+    </div>
+  `;
+}
+
+// ---------- handlers ----------
+function attachHandlers(){
+  const $ = sel => document.querySelector(sel);
+  const backBtn = $('#btn-back');
+  if(backBtn) backBtn.onclick = () => {
+    state.view='mode-select';
+    state.doctorForm={name:'',shift:'Mañana',procPatients:{},search:''};
+    state.guardiaForm={medico:'',fecha:'',filas:[nuevaFilaGuardia(),nuevaFilaGuardia(),nuevaFilaGuardia()]};
+    render();
+  };
+
+  if(state.view === 'mode-select'){
+    $('#go-doctor').onclick = () => { state.view='doctor'; render(); };
+    $('#go-doctor-guardia').onclick = () => { state.view='doctor-guardia'; render(); };
+    $('#go-admin').onclick = () => { state.view='admin-pin'; render(); };
+  }
+
+  if(state.view === 'doctor-guardia'){
+    $('#guardia-medico').oninput = e => { state.guardiaForm.medico = e.target.value; };
+    $('#guardia-fecha').oninput = e => { state.guardiaForm.fecha = e.target.value; };
+    document.querySelectorAll('.gf-input').forEach(inp => {
+      inp.oninput = e => {
+        const { field, idx } = inp.dataset;
+        state.guardiaForm.filas[idx][field] = e.target.value;
+      };
+    });
+    document.querySelectorAll('[data-delrow]').forEach(btn => {
+      btn.onclick = () => {
+        state.guardiaForm.filas.splice(parseInt(btn.dataset.delrow),1);
+        render();
+      };
+    });
+    $('#guardia-add-row').onclick = () => { state.guardiaForm.filas.push(nuevaFilaGuardia()); render(); };
+    $('#guardia-pdf').onclick = () => generarGuardiaPDF(state.guardiaForm);
+    $('#guardia-excel').onclick = () => generarGuardiaExcel(state.guardiaForm);
+    const submitBtn = $('#guardia-submit');
+    if(submitBtn) submitBtn.onclick = submitGuardia;
+  }
+
+  if(state.view === 'guardia-ticket'){
+    $('#new-guardia-record').onclick = () => {
+      state.guardiaForm = { medico: state.lastGuardiaTicket.medico, fecha:'', filas:[nuevaFilaGuardia(),nuevaFilaGuardia(),nuevaFilaGuardia()] };
+      state.view = 'doctor-guardia';
+      render();
+    };
+  }
+
+  if(state.view === 'doctor'){
+    $('#doctor-name').oninput = e => { state.doctorForm.name = e.target.value; };
+    $('#doctor-shift').onchange = e => { state.doctorForm.shift = e.target.value; };
+    const search = $('#proc-search');
+    if(search) search.oninput = e => { state.doctorForm.search = e.target.value; render(); preserveFocus('#proc-search'); };
+    document.querySelectorAll('.add-patient-btn').forEach(btn => {
+      btn.onclick = () => {
+        const id = btn.dataset.id;
+        if(!state.doctorForm.procPatients[id]) state.doctorForm.procPatients[id] = [];
+        state.doctorForm.procPatients[id].push('');
+        render();
+        const inputs = document.querySelectorAll(`.patient-input[data-id="${id}"]`);
+        if(inputs.length) inputs[inputs.length-1].focus();
+      };
+    });
+    document.querySelectorAll('.patient-input').forEach(inp => {
+      inp.oninput = e => {
+        const { id, idx } = inp.dataset;
+        state.doctorForm.procPatients[id][idx] = e.target.value;
+      };
+    });
+    document.querySelectorAll('.remove-patient').forEach(btn => {
+      btn.onclick = () => {
+        const { id, idx } = btn.dataset;
+        state.doctorForm.procPatients[id].splice(idx,1);
+        render();
+      };
+    });
+    const submitBtn = $('#submit-shift');
+    if(submitBtn) submitBtn.onclick = submitShift;
+  }
+
+  if(state.view === 'ticket'){
+    $('#new-record').onclick = () => {
+      state.doctorForm = { name: state.lastTicket.doctor, shift: state.lastTicket.shift, procPatients:{}, search:'' };
+      state.view = 'doctor';
+      render();
+    };
+  }
+
+  if(state.view === 'admin-pin'){
+    const submit = async () => {
+      const val = $('#pin-input').value;
+      const realPin = state.pin || await loadPin();
+      state.pin = realPin;
+      if(val === realPin){
+        state.entries = await loadEntries();
+        state.guardiaEntries = await loadGuardiaEntries();
+        state.view = 'admin';
+        render();
+      } else {
+        $('#pin-error').textContent = 'PIN incorrecto';
+      }
+    };
+    $('#pin-submit').onclick = submit;
+    $('#pin-input').onkeydown = e => { if(e.key==='Enter') submit(); };
+    $('#pin-input').focus();
+  }
+
+  if(state.view === 'admin'){
+    document.querySelectorAll('.tab').forEach(t => {
+      t.onclick = () => { state.adminTab = t.dataset.tab; render(); };
+    });
+
+    if(state.adminTab === 'resumen'){
+      const dateInput = $('#summary-date');
+      if(dateInput) dateInput.onchange = e => { state.summaryDate = e.target.value; render(); };
+      const copyBtn = $('#copy-summary');
+      if(copyBtn) copyBtn.onclick = () => copySummary();
+      const emailBtn = $('#email-summary');
+      if(emailBtn) emailBtn.onclick = () => emailSummary();
+    }
+
+    if(state.adminTab === 'guardia'){
+      const ordenados = [...state.guardiaEntries].sort((a,b)=>b.timestamp-a.timestamp);
+      document.querySelectorAll('[data-guardia-pdf]').forEach(btn => {
+        btn.onclick = () => generarGuardiaPDF(ordenados[btn.dataset.guardiaPdf]);
+      });
+      document.querySelectorAll('[data-guardia-excel]').forEach(btn => {
+        btn.onclick = () => generarGuardiaExcel(ordenados[btn.dataset.guardiaExcel]);
+      });
+      const excelTodoBtn = $('#guardia-excel-todo');
+      if(excelTodoBtn) excelTodoBtn.onclick = () => generarGuardiaExcelTodo(state.guardiaEntries);
+    }
+
+    if(state.adminTab === 'procedimientos'){
+      const addBtn = $('#add-proc');
+      if(addBtn) addBtn.onclick = () => {
+        state.procedures.push({ id: uid(), name:'', price:0, commission:0 });
+        render();
+      };
+      const importBtn = $('#toggle-import');
+      if(importBtn) importBtn.onclick = () => {
+        state.showImport = !state.showImport;
+        render();
+        if(state.showImport){
+          const ta = $('#import-textarea');
+          if(ta) ta.focus();
+        }
+      };
+      const confirmImportBtn = $('#confirm-import');
+      if(confirmImportBtn) confirmImportBtn.onclick = () => {
+        const ta = $('#import-textarea');
+        const text = ta ? ta.value : '';
+        const names = text.split('\n').map(s=>s.trim()).filter(Boolean);
+        if(names.length === 0){ showToast('Escribe al menos un nombre'); return; }
+        names.forEach(name => {
+          state.procedures.push({ id: uid(), name, price:0, commission:0 });
+        });
+        state.showImport = false;
+        render();
+        showToast(`${names.length} procedimiento${names.length!==1?'s':''} agregado${names.length!==1?'s':''}. Recuerda "Guardar cambios".`);
+      };
+      document.querySelectorAll('[data-del]').forEach(btn => {
+        btn.onclick = () => {
+          state.procedures = state.procedures.filter(p => p.id !== btn.dataset.del);
+          render();
+        };
+      });
+      const saveBtn = $('#save-procs');
+      if(saveBtn) saveBtn.onclick = async () => {
+        document.querySelectorAll('.proc-edit-row').forEach(row => {
+          const id = row.dataset.id;
+          const p = state.procedures.find(x=>x.id===id);
+          if(p){
+            p.name = row.querySelector('.pe-name').value.trim();
+            p.price = parseFloat(row.querySelector('.pe-price').value) || 0;
+            p.commission = parseFloat(row.querySelector('.pe-commission').value) || 0;
+          }
+        });
+        state.procedures = state.procedures.filter(p => p.name);
+        const ok = await saveProcedures(state.procedures);
+        showToast(ok ? 'Procedimientos guardados' : 'Error al guardar');
+        render();
+      };
+    }
+
+    if(state.adminTab === 'ajustes'){
+      $('#save-pin').onclick = async () => {
+        const val = $('#new-pin').value;
+        if(val.length < 4){ showToast('El PIN debe tener al menos 4 dígitos'); return; }
+        const ok = await savePin(val);
+        state.pin = val;
+        showToast(ok ? 'PIN actualizado' : 'Error al guardar');
+        $('#new-pin').value = '';
+      };
+    }
+  }
+}
+
+function preserveFocus(sel){
+  const el = document.querySelector(sel);
+  if(el){ el.focus(); const v=el.value; el.value=''; el.value=v; }
+}
+
+function refreshStickyOnly(){
+  // lightweight: just re-render, cursor loss on name field is acceptable since typing continues fine with re-render debounce avoided by not re-rendering on every keystroke for qty-independent fields
+}
+
+async function submitShift(){
+  const { name, shift, procPatients } = state.doctorForm;
+  const items = state.procedures
+    .map(p => ({ p, patients: (procPatients[p.id]||[]).map(s=>s.trim()).filter(Boolean) }))
+    .filter(x => x.patients.length > 0)
+    .map(x => ({ procId:x.p.id, name:x.p.name, price:x.p.price, commission:x.p.commission, patients:x.patients, qty:x.patients.length }));
+  if(items.length === 0 || !name.trim()) return;
+
+  const totalPrice = items.reduce((s,i)=>s+i.qty*i.price,0);
+  const totalCommission = items.reduce((s,i)=>s+i.qty*i.commission,0);
+
+  const entry = {
+    id: uid(),
+    doctor: name.trim(),
+    shift,
+    date: todayStr(),
+    items,
+    totalPrice,
+    totalCommission,
+    timestamp: Date.now()
+  };
+
+  const submitBtn = document.getElementById('submit-shift');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+
+  const ok = await appendToKey('entries', entry, HISTORIC_ENTRIES);
+
+  if(ok){
+    state.lastTicket = entry;
+    state.view = 'ticket';
+    render();
+  } else {
+    showToast('No se pudo enviar. Intenta de nuevo.');
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar registro'; }
+  }
+}
+
+function buildSummaryText(){
+  const dayEntries = state.entries.filter(e => e.date === state.summaryDate);
+  const byDoctor = {};
+  dayEntries.forEach(e => { if(!byDoctor[e.doctor]) byDoctor[e.doctor]=[]; byDoctor[e.doctor].push(e); });
+
+  let lines = [`Resumen de procedimientos — ${fmtDate(state.summaryDate)}`, ''];
+  let grandTotal=0, grandCommission=0;
+
+  Object.entries(byDoctor).forEach(([doctor, entries]) => {
+    const itemsMap = {};
+    let docTotal=0, docCommission=0;
+    entries.forEach(e => e.items.forEach(i => {
+      if(!itemsMap[i.name]) itemsMap[i.name] = {qty:0, price:i.price, commission:i.commission, patients:[]};
+      itemsMap[i.name].qty += i.qty;
+      itemsMap[i.name].patients.push(...i.patients);
+      docTotal += i.price*i.qty;
+      docCommission += i.commission*i.qty;
+    }));
+    lines.push(`${doctor}:`);
+    Object.entries(itemsMap).forEach(([name,i]) => {
+      lines.push(`  - ${name} x${i.qty} = ${money(i.qty*i.price)}  (${i.patients.join(', ')})`);
+    });
+    lines.push(`  Comisión: ${money(docCommission)}  |  Total: ${money(docTotal)}`);
+    lines.push('');
+    grandTotal += docTotal; grandCommission += docCommission;
+  });
+
+  lines.push(`TOTAL DEL DÍA: ${money(grandTotal)}`);
+  lines.push(`TOTAL COMISIONES: ${money(grandCommission)}`);
+  return lines.join('\n');
+}
+
+function copySummary(){
+  const text = buildSummaryText();
+  navigator.clipboard.writeText(text).then(()=> showToast('Resumen copiado ✓'))
+    .catch(()=> showToast('No se pudo copiar'));
+}
+
+function emailSummary(){
+  const text = buildSummaryText();
+  const subject = encodeURIComponent(`Resumen de procedimientos — ${fmtDate(state.summaryDate)}`);
+  const body = encodeURIComponent(text);
+  window.location.href = `mailto:?subject=${subject}&body=${body}`;
+}
+
+async function submitGuardia(){
+  const { medico, fecha, filas } = state.guardiaForm;
+  const filasValidas = filas.filter(f => f.paciente.trim());
+  if(!medico.trim() || filasValidas.length === 0) return;
+
+  const entry = {
+    id: uid(),
+    medico: medico.trim(),
+    fecha: fecha.trim() || fmtDate(todayStr()),
+    filas: filasValidas,
+    timestamp: Date.now()
+  };
+
+  const submitBtn = document.getElementById('guardia-submit');
+  if(submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Enviando...'; }
+
+  const ok = await appendToKey('guardiaEntries', entry, []);
+
+  if(ok){
+    state.lastGuardiaTicket = entry;
+    state.view = 'guardia-ticket';
+    render();
+  } else {
+    showToast('No se pudo enviar. Intenta de nuevo.');
+    if(submitBtn){ submitBtn.disabled = false; submitBtn.textContent = 'Enviar registro'; }
+  }
+}
+
+function generarGuardiaPDF(registro){
+  const filas = registro.filas.filter(f => f.paciente.trim());
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFontSize(14);
+  doc.text('Servicio Control Médico de Guardia', 14, 16);
+  doc.setFontSize(10);
+  doc.text('Clínica Médica Santa Fe', 14, 22);
+  doc.setFontSize(11);
+  doc.text('Médico: ' + (registro.medico || '-'), 14, 32);
+  doc.text('Fecha: ' + (registro.fecha || '-'), 14, 38);
+
+  const filasTabla = filas.map((f,idx)=>[
+    idx+1, f.paciente, f.consulta||'', f.seguimiento||'', f.urgencia||'', f.ingreso||'', f.procedimiento||''
+  ]);
+
+  doc.autoTable({
+    startY: 44,
+    head: [['No.','Paciente','Consulta','Seguimiento','Urgencia','Ingreso','Procedimiento']],
+    body: filasTabla,
+    styles: { fontSize: 8 },
+    headStyles: { fillColor: [14,74,69] }
+  });
+
+  const nombreArchivo = 'guardia_' + (registro.medico||'medico').replace(/\s+/g,'_') + '_' + (registro.fecha||'').replace(/\//g,'-') + '.pdf';
+  doc.save(nombreArchivo);
+}
+
+function generarGuardiaExcel(registro){
+  const filas = registro.filas.filter(f => f.paciente.trim()).map((f,idx)=>({
+    'No.': idx+1,
+    'Paciente': f.paciente,
+    'Consulta': f.consulta||'',
+    'Seguimiento': f.seguimiento||'',
+    'Urgencia': f.urgencia||'',
+    'Ingreso': f.ingreso||'',
+    'Procedimiento': f.procedimiento||''
+  }));
+  const hoja = XLSX.utils.json_to_sheet(filas);
+  XLSX.utils.sheet_add_aoa(hoja, [
+    ['Servicio Control Médico de Guardia - Clínica Santa Fe'],
+    ['Médico', registro.medico || ''],
+    ['Fecha', registro.fecha || ''],
+    []
+  ], { origin: 'A1' });
+  XLSX.utils.sheet_add_json(hoja, filas, { origin: 'A5', skipHeader: false });
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Guardia');
+  const nombreArchivo = 'guardia_' + (registro.medico||'medico').replace(/\s+/g,'_') + '_' + (registro.fecha||'').replace(/\//g,'-') + '.xlsx';
+  XLSX.writeFile(libro, nombreArchivo);
+}
+
+function generarGuardiaExcelTodo(entries){
+  if(!entries || entries.length === 0){ showToast('No hay registros de guardia para exportar'); return; }
+  const filasTotales = [];
+  entries.forEach(reg => {
+    reg.filas.filter(f=>f.paciente.trim()).forEach((f,idx) => {
+      filasTotales.push({
+        'Médico': reg.medico||'',
+        'Fecha': reg.fecha||'',
+        'No.': idx+1,
+        'Paciente': f.paciente,
+        'Consulta': f.consulta||'',
+        'Seguimiento': f.seguimiento||'',
+        'Urgencia': f.urgencia||'',
+        'Ingreso': f.ingreso||'',
+        'Procedimiento': f.procedimiento||''
+      });
+    });
+  });
+  const hoja = XLSX.utils.json_to_sheet(filasTotales);
+  const libro = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(libro, hoja, 'Todos los registros');
+  XLSX.writeFile(libro, 'guardias_clinica_santafe.xlsx');
+}
+
+// ---------- init ----------
+(async function init(){
+  state.procedures = await loadProcedures();
+  render();
+})();
+</script>
+</body>
+</html>
